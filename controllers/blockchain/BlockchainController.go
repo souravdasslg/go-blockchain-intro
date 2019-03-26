@@ -22,6 +22,7 @@ func HandleGetBlockChain(w http.ResponseWriter, r *http.Request) {
 
 /* HandleWriteBlock prints all the blocks */
 func HandleWriteBlock(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Println("Length Of Blockchain", len(Struct.Blockchain)-1)
 	spew.Dump(Struct.Blockchain)
 	var m Struct.Message
@@ -31,7 +32,10 @@ func HandleWriteBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+	Struct.Mutex.Lock()
 	newBlock, err := blockchainlib.GenerateBlock(Struct.Blockchain[len(Struct.Blockchain)-1], m.BPM)
+	Struct.Mutex.Unlock()
+
 	if err != nil {
 		respondWithJSON(w, r, http.StatusInternalServerError, m)
 	}
@@ -44,6 +48,7 @@ func HandleWriteBlock(w http.ResponseWriter, r *http.Request) {
 }
 
 func respondWithJSON(w http.ResponseWriter, r *http.Request, code int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
 	response, err := json.MarshalIndent(payload, "", " ")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
